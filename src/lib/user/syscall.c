@@ -61,8 +61,14 @@
           retval;                                               \
         })
 
+bool
+mine (void * info, pid_t thread_id)
+{
+  return syscall2 (SYS_MINE, info, thread_id);
+}
+
 void
-halt (void) 
+halt (void)
 {
   syscall0 (SYS_HALT);
   NOT_REACHED ();
@@ -106,7 +112,7 @@ open (const char *file)
 }
 
 int
-filesize (int fd) 
+filesize (int fd)
 {
   return syscall1 (SYS_FILESIZE, fd);
 }
@@ -124,13 +130,13 @@ write (int fd, const void *buffer, unsigned size)
 }
 
 void
-seek (int fd, unsigned position) 
+seek (int fd, unsigned position)
 {
   syscall2 (SYS_SEEK, fd, position);
 }
 
 unsigned
-tell (int fd) 
+tell (int fd)
 {
   return syscall1 (SYS_TELL, fd);
 }
@@ -166,19 +172,44 @@ mkdir (const char *dir)
 }
 
 bool
-readdir (int fd, char name[READDIR_MAX_LEN + 1]) 
+readdir (int fd, char name[READDIR_MAX_LEN + 1])
 {
   return syscall2 (SYS_READDIR, fd, name);
 }
 
 bool
-isdir (int fd) 
+isdir (int fd)
 {
   return syscall1 (SYS_ISDIR, fd);
 }
 
 int
-inumber (int fd) 
+inumber (int fd)
 {
   return syscall1 (SYS_INUMBER, fd);
 }
+int
+suma(int a , int b)
+{
+ return syscall2 (SYS_suma, a, b);
+}
+int 
+semaphore_cantidad_init(int cantidad){
+  return  syscall1(SYS_semaphore_cantidad_init,cantidad);
+}
+int 
+semaphore_init(int id,int value){
+  return  syscall2(SYS_semaphore_init,id,value);
+}
+int 
+semaphore_wait(int id){
+  return  syscall1(SYS_semaphore_wait,id);
+}
+int 
+semaphore_post(int id){
+  return  syscall1(SYS_semaphore_post,id);
+}
+
+
+
+

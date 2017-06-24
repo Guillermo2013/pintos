@@ -26,6 +26,7 @@
 #define _DEBUG_PRINTF(...) /* do nothing */
 #endif
 
+struct semaphore * semaphores;
 static void syscall_handler (struct intr_frame *);
 
 static void check_user (const uint8_t *uaddr);
@@ -36,11 +37,12 @@ static int memread_user (void *src, void *des, size_t bytes);
 enum fd_search_filter { FD_FILE = 1, FD_DIRECTORY = 2 };
 static struct file_desc* find_file_desc(struct thread *, int fd, enum fd_search_filter flag);
 
+bool sys_mine (struct t_info * info, pid_t thread_id);
+void print_info(struct thread *t, void *aux UNUSED);
 void sys_halt (void);
 void sys_exit (int);
 pid_t sys_exec (const char *cmdline);
 int sys_wait (pid_t pid);
-
 bool sys_create(const char* filename, unsigned initial_size);
 bool sys_remove(const char* filename);
 int sys_open(const char* file);
@@ -50,7 +52,11 @@ unsigned sys_tell(int fd);
 void sys_close(int fd);
 int sys_read(int fd, void *buffer, unsigned size);
 int sys_write(int fd, const void *buffer, unsigned size);
-
+int sys_suma(int a , int b);
+int semaphore_cantidad_init(int cantidad);
+int semaphore_wait(int id);
+int semaphore_post(int id);
+int semaphore_init(int cantidad, int value);
 #ifdef VM
 mmapid_t sys_mmap(int fd, void *);
 bool sys_munmap(mmapid_t);
@@ -104,6 +110,7 @@ syscall_handler (struct intr_frame *f)
   // Dispatch w.r.t system call number
   // SYS_*** constants are defined in syscall-nr.h
   switch (syscall_number) {
+
   case SYS_HALT: // 0
     {
       sys_halt();
@@ -252,6 +259,18 @@ syscall_handler (struct intr_frame *f)
       break;
     }
 
+  case SYS_MINE:
+    {
+      struct t_info * info;
+      pid_t thread_id;
+
+      memread_user(f->esp + 4, &info, sizeof(info));
+      memread_user(f->esp + 8, &thread_id, sizeof(thread_id));
+
+      f->eax = sys_mine(info, thread_id);
+      break;
+    }
+
 #ifdef VM
   case SYS_MMAP: // 13
     {
@@ -334,6 +353,51 @@ syscall_handler (struct intr_frame *f)
       f->eax = return_code;
       break;
     }
+case SYS_suma: 
+{       
+	int a;
+	int b;
+	memread_user(f->esp + 4, &a, sizeof(a));
+	memread_user(f->esp + 8, &b, sizeof(b));
+        f->eax = sys_suma(a,b);
+		 
+         break;
+ }
+case SYS_semaphore_init: 
+{       
+	int cantidad;
+	int value;
+	memread_user(f->esp + 4, &cantidad, sizeof(cantidad));
+	memread_user(f->esp + 8, &value, sizeof(value));
+	f->eax = semaphore_init(cantidad,value);
+		 
+         break;
+ }
+case SYS_semaphore_cantidad_init: 
+{       
+	int id;
+	memread_user(f->esp + 4, &id, sizeof(id));
+	f->eax = semaphore_cantidad_init(id);
+		 
+         break;
+ }
+case SYS_semaphore_wait: 
+{       
+	int id;
+	memread_user(f->esp + 4, &id, sizeof(id));
+	f->eax = semaphore_wait(id);
+		 
+         break;
+ }
+case SYS_semaphore_post: 
+{       
+	int id;
+	memread_user(f->esp + 4, &id, sizeof(id));
+	f->eax = semaphore_post(id);
+		 
+         break;
+ }
+
 
 #endif
 
@@ -347,9 +411,49 @@ syscall_handler (struct intr_frame *f)
     break;
   }
 
+
 }
 
 /****************** System Call Implementations ********************/
+
+
+int semaphore_cantidad_init(int cantidad){
+  semaphores = malloc(cantidad * sizeof(struct semaphore));
+ if(sizeof(semaphores) == 0)
+	return -1;
+ return cantidad * sizeof(struct semaphore); 
+ 		
+}
+int semaphore_init(int cantidad,int value){
+ 
+  sema_init(&semaphores[cantidad],value);
+  return 0;
+ 		
+}
+int semaphore_wait(int id){
+ 
+  sema_down(&semaphores[id]);
+  return 0;		
+}
+int semaphore_post(int id){
+ 
+  sema_up(&semaphores[id]);
+  return 0;		
+}
+int sys_suma(int a , int b){
+   printf("numero :%d" ,a + b);
+   return a + b;
+}
+void print_info(struct thread *t, void *aux UNUSED){
+  printf("Thread: %d\tT_Run: %d\tT_Wait: %d\tPriority: %d\n", t->tid, t->times_running, t->times_waiting, t->priority);
+}
+
+bool sys_mine(struct t_info * info, pid_t thread_id) {
+  enum intr_level oldlevel = intr_disable ();
+  get_thread(info, thread_id);
+  intr_set_level (oldlevel);
+  return true;
+}
 
 void sys_halt(void) {
   shutdown_power_off();
@@ -511,6 +615,8 @@ void sys_close(int fd) {
   }
   lock_release (&filesys_lock);
 }
+
+
 
 int sys_read(int fd, void *buffer, unsigned size) {
   // memory validation : [buffer+0, buffer+size) should be all valid

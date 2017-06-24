@@ -20,6 +20,7 @@ typedef int mapid_t;
 #define EXIT_FAILURE 1          /* Unsuccessful execution. */
 
 /* Projects 2 and later. */
+bool mine (void * info, pid_t thread_id);
 void halt (void) NO_RETURN;
 void exit (int status) NO_RETURN;
 pid_t exec (const char *file);
@@ -33,7 +34,11 @@ int write (int fd, const void *buffer, unsigned length);
 void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
-
+int suma(int a,int b);
+int semaphore_cantidad_init(int cantidad);
+int semaphore_init(int id,int value);
+int semaphore_wait(int cantidad);
+int semaphore_post(int cantidad);
 /* Project 3 and optionally project 4. */
 mapid_t mmap (int fd, void *addr);
 void munmap (mapid_t);
@@ -44,5 +49,5 @@ bool mkdir (const char *dir);
 bool readdir (int fd, char name[READDIR_MAX_LEN + 1]);
 bool isdir (int fd);
 int inumber (int fd);
-
+int suma(int a , int b);
 #endif /* lib/user/syscall.h */

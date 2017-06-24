@@ -10,20 +10,20 @@
 
 /* Size of array to sort. */
 #define SORT_SIZE 128
+#include <syscall.h>
 
-int
 main (void)
 {
-  /* Array to sort.  Static to reduce stack usage. */
-  static int array[SORT_SIZE];
 
+/* Array to sort.  Static to reduce stack usage.*/ 
+  static int array[SORT_SIZE]; 
+  printf("Num: %d\n",suma(2,3));
   int i, j, tmp;
-
-  /* First initialize the array in descending order. */
+/*   First initialize the array in descending order.*/ 
   for (i = 0; i < SORT_SIZE; i++)
     array[i] = SORT_SIZE - i - 1;
 
-  /* Then sort in ascending order. */
+/*   Then sort in ascending order. */
   for (i = 0; i < SORT_SIZE - 1; i++)
     for (j = 0; j < SORT_SIZE - 1 - i; j++)
       if (array[j] > array[j + 1])
@@ -33,6 +33,10 @@ main (void)
 	  array[j + 1] = tmp;
 	}
 
+  for(i = 0; i < SORT_SIZE; i++) {
+    printf("Num: %d\n", array[i]);
+  }
   printf ("sort exiting with code %d\n", array[0]);
   return array[0];
+
 }
